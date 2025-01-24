@@ -1,0 +1,54 @@
+// Define the region of interest (Pakistan shapefile)
+var pakistan = ee.FeatureCollection("users/shahidiqbal/Pak");
+
+// Load the UHI dataset
+var dataset = ee.ImageCollection('YALE/YCEO/UHI/Summer_UHI_yearly_pixel/v4')
+                .mosaic() // Mosaic the images into a single layer
+                .clip(pakistan); // Clip to Pakistan boundary
+
+// Define visualization parameters
+var visualization = {
+  bands: ['Daytime'],
+  min: -1.5,
+  max: 7.5,
+  palette: [
+    '313695', '74add1', 'fed976', 'feb24c', 'fd8d3c', 'fc4e2a', 'e31a1c',
+    'b10026'
+  ] // Blue to red for heat intensity
+};
+
+// Add the UHI layer to the map
+Map.addLayer(dataset, visualization, 'Daytime UHI');
+
+// Add the Pakistan boundary as a hollow outline
+Map.addLayer(pakistan.style({color: 'blue', fillColor: '00000000', width: 2}), {}, 'Pakistan Boundary');
+
+// Center the map on Pakistan
+Map.centerObject(pakistan, 6);
+
+// Add a legend
+var legend = ui.Panel({style: {position: 'bottom-left'}});
+legend.add(ui.Label({value: 'Daytime UHI Legend', style: {fontWeight: 'bold', fontSize: '16px'}}));
+
+// Define legend items with corresponding colors and descriptions
+var legendItems = [
+  {color: '313695', name: 'Very Low (-1.5 to 0)'},
+  {color: '74add1', name: 'Low (0 to 2)'},
+  {color: 'fed976', name: 'Moderate (2 to 4)'},
+  {color: 'feb24c', name: 'High (4 to 5)'},
+  {color: 'fd8d3c', name: 'Very High (5 to 6)'},
+  {color: 'fc4e2a', name: 'Extreme (6 to 7)'},
+  {color: 'e31a1c', name: 'Severe (7 to 7.5)'},
+  {color: 'b10026', name: 'Critical (>7.5)'}
+];
+
+// Add legend items dynamically
+legendItems.forEach(function(item) {
+  var colorBox = ui.Label('', {backgroundColor: item.color, padding: '8px', margin: '4px'});
+  var description = ui.Label(item.name, {margin: '4px 0 4px 6px'});
+  var legendItem = ui.Panel([colorBox, description], ui.Panel.Layout.Flow('horizontal'));
+  legend.add(legendItem);
+});
+
+// Add the legend to the map
+Map.add(legend);
